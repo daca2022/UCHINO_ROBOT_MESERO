@@ -1,0 +1,39 @@
+# Robot Mesero v3 — Python dependencies
+# Install: python3 -m pip install --break-system-packages -r requirements.txt
+# Python 3.12.3 on Ubuntu 24.04
+
+# ── ML Framework ──
+torch>=2.10.0
+torchaudio>=2.10.0
+
+# ── Speech / Audio ──
+speechbrain>=1.0.0          # Emotion recognition (SER)
+openwakeword>=0.4.0         # Wake word detection
+deepfilternet>=0.5.0        # Noise suppression (DeepFilterNet3)
+
+# ── TTS ──
+kokoro>=0.9.0               # Neural TTS (primary)
+piper-tts>=1.4.0            # Piper TTS (fallback, invoked via subprocess)
+
+# ── Dialogue / Orchestration ──
+langgraph>=1.0.0
+langgraph-checkpoint>=4.0.0
+langgraph-prebuilt>=1.0.0
+
+# ── HTTP / WebSocket ──
+httpx>=0.28.0
+aiohttp>=3.13.0
+websockets>=16.0
+huggingface_hub>=1.10.0
+
+# ── ML Runtime ──
+onnxruntime>=1.26.0
+sentencepiece>=0.2.0
+numpy>=1.26.0
+scipy>=1.11.0
+soundfile>=0.13.0
+
+# ── LEGACY: Memory module (installed separately in memory/)
+
+# # ── Install command ──
+# python3 -m pip install --break-system-packages -r requirements.txt

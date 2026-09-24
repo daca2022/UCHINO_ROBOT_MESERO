@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chipi - Voz + RVC Auron</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{color:#e94560;margin-bottom:5px;font-size:20px}
+h1 small{font-size:12px;color:#888;font-weight:normal}
+#status{padding:6px 14px;border-radius:20px;margin-bottom:12px;font-size:12px;font-weight:bold;transition:all .3s}
+#chat{width:100%;max-width:700px;flex:1;overflow-y:auto;padding:10px;margin-bottom:12px;min-height:150px;max-height:50vh;border:1px solid #333;border-radius:12px}
+.msg{padding:8px 12px;border-radius:12px;margin:6px 0;max-width:85%;word-wrap:break-word;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.user{background:#0f3460;margin-left:auto;border-bottom-right-radius:4px}
+.chipi{background:#533483;margin-right:auto;border-bottom-left-radius:4px}
+.label{font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;opacity:.7}
+.user .label{color:#16c79a}.chipi .label{color:#e94560}
+
+#pipeline{margin:10px 0;width:100%;max-width:700px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stage{background:#0a0a1a;border:1px solid #333;border-radius:8px;padding:8px;text-align:center;font-size:11px;transition:all .3s}
+.stage.active{background:#0f3460;border-color:#e94560}
+.stage.done{background:#1a3a1a;border-color:#16c79a}
+.stage .icon{font-size:18px;margin-bottom:3px}
+.stage .name{color:#888;font-size:10px}
+.stage .time{color:#16c79a;font-size:10px;font-weight:bold;display:none}
+.stage.done .time{display:block}
+
+#metrics{width:100%;max-width:700px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.metric{background:#0a0a1a;border:1px solid #333;border-radius:8px;padding:8px 12px}
+.metric .value{font-size:18px;font-weight:bold;color:#16c79a}
+.metric .value.rvc{color:#e94560}
+.metric .label{color:#888;font-size:10px;text-transform:uppercase}
+
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:10px;width:100%;max-width:700px;flex-wrap:wrap}
+#textInput{flex:1;min-width:200px;padding:10px 14px;border-radius:25px;border:2px solid #333;background:#0a0a1a;color:#fff;font-size:14px;outline:none}
+#textInput:focus{border-color:#e94560}
+#sendBtn{width:40px;height:40px;border-radius:50%;border:2px solid #16c79a;background:transparent;color:#16c79a;font-size:16px;cursor:pointer}
+#sendBtn:hover{background:rgba(22,199,154,.1)}
+#rvcToggle{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;user-select:none}
+#rvcToggle input{width:36px;height:20px;appearance:none;background:#333;border-radius:10px;position:relative;cursor:pointer;transition:all .2s}
+#rvcToggle input:checked{background:#e94560}
+#rvcToggle input::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;top:2px;left:2px;background:#fff;transition:all .2s}
+#rvcToggle input:checked::before{left:18px}
+#rvcStatus{font-size:10px;color:#888;display:inline-block;margin-left:4px}
+#logs{width:100%;max-width:700px;margin-top:8px}
+#logContent{background:#0a0a1a;border:1px solid #333;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;max-height:120px;overflow-y:auto;color:#aaa}
+.log-entry{margin:2px 0;border-bottom:1px solid #1a1a1a;padding:2px 0}
+.log-time{color:#555;margin-right:8px}
+.log-level{display:inline-block;padding:0 4px;border-radius:3px;font-size:9px;font-weight:bold;margin-right:6px}
+.log-level.INFO{background:#0f3460;color:#16c79a}
+.log-level.WARN{background:#533483;color:#f4d03f}
+.log-level.ERROR{background:#3a0a0a;color:#e94560}
+</style>
+</head>
+<body>
+<h1>Chipi <small>Voz + RVC Auron</small></h1>
+<div id="status" style="background:#0f3460;color:#16c79a">Listo</div>
+
+<div id="pipeline">
+  <div class="stage" id="stage-llm"><div class="icon">🧠</div><div class="name">LLM</div><div class="time"></div></div>
+  <div class="stage" id="stage-tts"><div class="icon">🗣️</div><div class="name">Kokoro</div><div class="time"></div></div>
+  <div class="stage" id="stage-rvc"><div class="icon">🎭</div><div class="name">RVC Auron</div><div class="time"></div></div>
+  <div class="stage" id="stage-play"><div class="icon">🔊</div><div class="name">Reproducir</div><div class="time"></div></div>
+</div>
+
+<div id="metrics">
+  <div class="metric"><div class="value" id="m-tts-latency">-</div><div class="label">TTS (solo Kokoro)</div></div>
+  <div class="metric"><div class="value rvc" id="m-rvc-latency">-</div><div class="label">TTS + RVC Auron</div></div>
+</div>
+
+<div id="chat"></div>
+
+<div class="controls">
+  <input id="textInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
+  <button id="sendBtn">➤</button>
+  <label id="rvcToggle">
+    <input type="checkbox" id="rvcCheck" checked>
+    <span>RVC <span id="rvcStatus">Auron</span></span>
+  </label>
+  <button id="compareBtn" style="font-size:11px;padding:4px 8px;border-radius:5px;border:1px solid #f4d03f;background:transparent;color:#f4d03f;cursor:pointer">A/B</button>
+</div>
+
+<div id="logs">
+  <div id="logContent"><div class="log-entry"><span class="log-time">─</span>Listo. Envía un mensaje para probar el pipeline.</div></div>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const rvcCheck = document.getElementById('rvcCheck');
+const rvcStatus = document.getElementById('rvcStatus');
+const status = document.getElementById('status');
+const logContent = document.getElementById('logContent');
+const compareBtn = document.getElementById('compareBtn');
+
+function log(msg, level = 'INFO') {
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className = 'log-entry';
+  div.innerHTML = `<span class="log-time">${t}</span><span class="log-level ${level}">${level}</span>${msg}`;
+  logContent.appendChild(div);
+  logContent.scrollTop = logContent.scrollHeight;
+}
+
+function setStage(id, state) {
+  const el = document.getElementById(id);
+  el.classList.remove('active', 'done');
+  if (state) el.classList.add(state);
+}
+
+function addMsg(text, who, extra = '') {
+  const div = document.createElement('div');
+  div.className = `msg ${who}`;
+  div.innerHTML = `<div class="label">${who === 'user' ? 'Tú' : 'Chipi'}</div>${text}${extra}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function playAudio(base64) {
+  setStage('stage-play', 'active');
+  const t0 = performance.now();
+  const audio = new Audio('data:audio/wav;base64,' + base64);
+  audio.onended = () => {
+    setStage('stage-play', 'done');
+    document.getElementById('stage-play').querySelector('.time').textContent = ((performance.now() - t0) / 1000).toFixed(2) + 's';
+  };
+  audio.onerror = () => log('Error reproduciendo audio', 'ERROR');
+  audio.play().catch(e => log('Error play: ' + e.message, 'ERROR'));
+}
+
+async function speak(text, useRvc) {
+  setStage('stage-llm', 'active');
+  const tLlm = performance.now();
+  
+  let responseText = text;
+  setStage('stage-llm', 'done');
+  document.getElementById('stage-llm').querySelector('.time').textContent = ((performance.now() - tLlm) / 1000).toFixed(2) + 's';
+  
+  setStage('stage-tts', 'active');
+  const tTts = performance.now();
+  
+  try {
+    const resp = await fetch('http://127.0.0.1:3500/speak', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: responseText, emotion: 'feliz', use_rvc: useRvc }),
+    });
+    const data = await resp.json();
+    const ttsLatency = (performance.now() - tTts) / 1000;
+    
+    setStage('stage-tts', 'done');
+    document.getElementById('stage-tts').querySelector('.time').textContent = ttsLatency.toFixed(2) + 's';
+    
+    if (!data.success || !data.wav_base64) {
+      log('Error: ' + (data.error || 'sin audio'), 'ERROR');
+      status.textContent = 'Error';
+      status.style.background = '#3a0a0a';
+      return;
+    }
+    
+    log(`LLM: ${data.emotion_style} | TTS: ${data.engine} | Auron: ${data.auron_applied}`, 'INFO');
+    
+    if (useRvc && data.auron_applied) {
+      setStage('stage-rvc', 'done');
+      const rvcLatency = (performance.now() - tTts) / 1000;
+      document.getElementById('stage-rvc').querySelector('.time').textContent = rvcLatency.toFixed(2) + 's';
+      
+      if (document.getElementById('m-rvc-latency').textContent === '-') {
+        document.getElementById('m-rvc-latency').textContent = rvcLatency.toFixed(2) + 's';
+      }
+    } else {
+      setStage('stage-rvc', 'active');
+      document.getElementById('stage-rvc').querySelector('.time').textContent = '0.00s';
+      setStage('stage-rvc', 'done');
+      if (document.getElementById('m-tts-latency').textContent === '-') {
+        document.getElementById('m-tts-latency').textContent = ttsLatency.toFixed(2) + 's';
+      }
+    }
+    
+    playAudio(data.wav_base64);
+    addMsg(responseText, 'chipi', '<div style="font-size:10px;color:#888;margin-top:4px">✨ ' + data.emotion_style + ' · ' + data.engine + (data.auron_applied ? ' + Auron' : '') + '</div>');
+    status.textContent = 'Listo';
+    status.style.background = '#0f3460';
+    
+  } catch (e) {
+    log('Error: ' + e.message, 'ERROR');
+    status.textContent = 'Error';
+    status.style.background = '#3a0a0a';
+  }
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg(text, 'user');
+  status.textContent = 'Procesando...';
+  status.style.background = '#533483';
+  setStage('stage-llm', 'active');
+  setStage('stage-tts', '');
+  setStage('stage-rvc', '');
+  setStage('stage-play', '');
+  const useRvc = rvcCheck.checked;
+  rvcStatus.textContent = useRvc ? 'Auron' : 'OFF';
+  await speak(text, useRvc);
+}
+
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+rvcCheck.addEventListener('change', () => {
+  rvcStatus.textContent = rvcCheck.checked ? 'Auron' : 'OFF';
+});
+
+let compareCount = 0;
+compareBtn.addEventListener('click', async () => {
+  const text = input.value.trim() || 'Hola Uchino, ¿cómo estás?';
+  compareCount++;
+  log(`A/B test #${compareCount}: midiendo con y sin RVC...`);
+  
+  addMsg(`A/B #${compareCount}: Sin RVC`, 'user');
+  const t0 = performance.now();
+  await speak(text, false);
+  const tNoRvc = performance.now() - t0;
+  document.getElementById('m-tts-latency').textContent = (tNoRvc / 1000).toFixed(2) + 's';
+  
+  await new Promise(r => setTimeout(r, 500));
+  
+  addMsg(`A/B #${compareCount}: Con RVC`, 'user');
+  const t1 = performance.now();
+  await speak(text, true);
+  const tRvc = performance.now() - t1;
+  document.getElementById('m-rvc-latency').textContent = (tRvc / 1000).toFixed(2) + 's';
+  
+  log(`A/B #${compareCount}: Kokoro=${(tNoRvc/1000).toFixed(2)}s vs Kokoro+Auron=${(tRvc/1000).toFixed(2)}s`, 'INFO');
+});
+
+log('Página cargada. RVC Auron activo.');
+</script>
+</body>
+</html>

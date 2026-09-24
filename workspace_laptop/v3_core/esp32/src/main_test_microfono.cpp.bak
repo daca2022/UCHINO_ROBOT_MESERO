@@ -1,0 +1,227 @@
+/**
+ * 🔊 PRUEBA DE MICRÓFONOS ESP32 (INMP441)
+ *
+ * Este archivo es una versión simplificada para probar SOLAMENTE los micrófonos.
+ * Calcula el volumen de cada micrófono, el ángulo (AudioCompass) y envía 
+ * el audio en crudo por WebSocket para ser reproducido en la laptop.
+ */
+
+#include <Arduino.h>
+#include <WiFi.h>
+#include <ArduinoOTA.h>
+#include <ArduinoWebsockets.h>
+#include <driver/i2s.h>
+#include <math.h>
+
+// ── CONFIGURACIÓN WIFI ───────────────────────────────────────
+const char* WIFI_SSID = "robot_mesero_2.4G";
+const char* WIFI_PASS = "";
+
+// ── CONFIGURACIÓN WEBSOCKET (PRUEBA) ─────────────────────────
+const char* WS_HOST   = "192.168.1.2"; // IP de la laptop
+const int   WS_PORT   = 3004;          // Puerto del script de prueba
+const char* WS_PATH   = "/ws/test";
+
+// ── PINOUT I2S (MICRÓFONOS INMP441) ──────────────────────────
+#define I2S_MIC_SCK     32
+#define I2S_MIC_WS      33
+#define I2S_MIC_SD      34
+
+// ── CONFIGURACIÓN AUDIO ──────────────────────────────────────
+#define SAMPLE_RATE     16000
+#define BUFFER_SAMPLES  512
+
+// ── CALIBRACIÓN DE GANANCIA (VOLUMEN) ────────────────────────
+// Ajusta estos valores si escuchas muy bajo o si un lado es más fuerte que el otro.
+// 1.0 = Original, 2.0 = Doble volumen, 5.0 = Quintuple de volumen.
+float GAIN_LEFT  = 1.0;  // Multiplicador para micrófono Izquierdo (L)
+float GAIN_RIGHT = 5.0;  // Multiplicador para micrófono Derecho (R)
+
+using namespace websockets;
+WebsocketsClient wsClient;
+
+int16_t micBuffer[BUFFER_SAMPLES]; // Estéreo L y R alternados
+int16_t compassLeft[BUFFER_SAMPLES / 2];
+int16_t compassRight[BUFFER_SAMPLES / 2];
+
+volatile bool wsConnected = false;
+unsigned long lastReconnect = 0;
+unsigned long lastPrint = 0;
+
+void setupWiFiAndOTA() {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    Serial.print("[WiFi] Conectando");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500); Serial.print(".");
+    }
+    Serial.printf("\n[WiFi] Conectado. IP: %s\n", WiFi.localIP().toString().c_str());
+
+    ArduinoOTA.setHostname("chipi-esp32-test");
+    ArduinoOTA.setPassword("");
+    ArduinoOTA.begin();
+    Serial.println("[OTA] Listo para actualizaciones OTA");
+}
+
+void initI2SMic() {
+    i2s_config_t i2sMicConfig = {
+        .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+        .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+        .communication_format = I2S_COMM_FORMAT_STAND_I2S,
+        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+        .dma_buf_count = 8,
+        .dma_buf_len = BUFFER_SAMPLES,
+        .use_apll = false,
+        .tx_desc_auto_clear = false,
+        .fixed_mclk = 0
+    };
+    i2s_pin_config_t i2sMicPins = {
+        .bck_io_num = I2S_MIC_SCK,
+        .ws_io_num = I2S_MIC_WS,
+        .data_out_num = I2S_PIN_NO_CHANGE,
+        .data_in_num = I2S_MIC_SD
+    };
+    i2s_driver_install(I2S_NUM_0, &i2sMicConfig, 0, NULL);
+    i2s_set_pin(I2S_NUM_0, &i2sMicPins);
+    Serial.println("[I2S] Micrófonos inicializados correctamente");
+}
+
+void connectWS() {
+    if (wsConnected) return;
+    if (millis() - lastReconnect < 3000) return;
+    lastReconnect = millis();
+
+    String url = String("ws://") + WS_HOST + ":" + WS_PORT + WS_PATH;
+    Serial.printf("[WS] Intentando conectar a %s...\n", url.c_str());
+
+    wsClient.onEvent([](WebsocketsEvent event, String data) {
+        if (event == WebsocketsEvent::ConnectionOpened) {
+            wsConnected = true;
+            Serial.println("[WS] ¡Conectado al servidor de pruebas en la laptop!");
+        } else if (event == WebsocketsEvent::ConnectionClosed) {
+            wsConnected = false;
+            Serial.println("[WS] Desconectado del servidor");
+        }
+    });
+
+    wsClient.connect(url);
+}
+
+float calculateTDoA() {
+    int maxDelay = 10;
+    float maxCorr = 0;
+    int bestDelay = 0;
+
+    for (int delay = -maxDelay; delay <= maxDelay; delay++) {
+        float corr = 0;
+        int count = 0;
+        for (int i = maxDelay; i < BUFFER_SAMPLES / 2 - maxDelay; i++) {
+            int j = i + delay;
+            corr += (float)compassLeft[i] * (float)compassRight[j];
+            count++;
+        }
+        corr /= count;
+        if (corr > maxCorr) {
+            maxCorr = corr;
+            bestDelay = delay;
+        }
+    }
+    // Calcular ángulo asumiendo 14cm de separación y 343m/s de velocidad del sonido
+    float angle = asinf((float)bestDelay / 16000.0f * 343.0f / 0.14f) * 180.0f / M_PI;
+    return angle;
+}
+
+void processAudio() {
+    size_t bytesRead;
+    i2s_read(I2S_NUM_0, micBuffer, BUFFER_SAMPLES * 2, &bytesRead, portMAX_DELAY);
+
+    if (bytesRead == 0) return;
+
+    // --- APLICAR GANANCIA DIGITAL (VOLUMEN) Y COMPENSAR DESBALANCE ---
+    for (int i = 0; i < BUFFER_SAMPLES; i += 2) {
+        // Canal Izquierdo
+        int32_t sampleL = (int32_t)micBuffer[i] * GAIN_LEFT;
+        if (sampleL > 32767) sampleL = 32767;
+        if (sampleL < -32768) sampleL = -32768;
+        micBuffer[i] = (int16_t)sampleL;
+
+        // Canal Derecho
+        int32_t sampleR = (int32_t)micBuffer[i + 1] * GAIN_RIGHT;
+        if (sampleR > 32767) sampleR = 32767;
+        if (sampleR < -32768) sampleR = -32768;
+        micBuffer[i + 1] = (int16_t)sampleR;
+    }
+
+    double sumLeft = 0;
+    double sumRight = 0;
+
+    // Separar canales para cálculos
+    for (int i = 0; i < BUFFER_SAMPLES / 2; i++) {
+        compassLeft[i] = micBuffer[i * 2];
+        compassRight[i] = micBuffer[i * 2 + 1];
+        
+        sumLeft += (double)compassLeft[i] * compassLeft[i];
+        sumRight += (double)compassRight[i] * compassRight[i];
+    }
+
+    double rmsLeft = sqrt(sumLeft / (BUFFER_SAMPLES / 2));
+    double rmsRight = sqrt(sumRight / (BUFFER_SAMPLES / 2));
+    
+    // Convertir a dB (relativo a 32768, que es el max de 16-bit)
+    float dbLeft = 20.0 * log10(rmsLeft / 32768.0);
+    float dbRight = 20.0 * log10(rmsRight / 32768.0);
+
+    float angle = calculateTDoA();
+
+    // Mostrar logs cada 500ms
+    if (millis() - lastPrint > 500) {
+        lastPrint = millis();
+        Serial.printf("[Audio] Vol L: %.2f dB | Vol R: %.2f dB | Ángulo: %.2f°\n", dbLeft, dbRight, angle);
+        
+        if (dbLeft < -60 && dbRight < -60) {
+            Serial.println("--- Silencio ---");
+        } else if (angle > 15) {
+             Serial.println(">>> Hablando desde la DERECHA");
+        } else if (angle < -15) {
+             Serial.println("<<< Hablando desde la IZQUIERDA");
+        } else {
+             Serial.println("=== Hablando de FRENTE o ATRÁS");
+        }
+
+        if (wsConnected) {
+            String json = "{\"angle\":" + String(angle) + ",\"volL\":" + String(dbLeft) + ",\"volR\":" + String(dbRight) + "}";
+            wsClient.send(json);
+        }
+    }
+
+    // Enviar el audio estéreo en crudo al script de Node.js para escucharlo
+    if (wsConnected) {
+        wsClient.sendBinary((const char*)micBuffer, bytesRead);
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+    delay(500);
+    Serial.println("\n═══════════════════════════════════════");
+    Serial.println("  PRUEBA DE MICRÓFONOS ESP32");
+    Serial.println("═══════════════════════════════════════");
+    
+    setupWiFiAndOTA();
+    initI2SMic();
+}
+
+void loop() {
+    ArduinoOTA.handle();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        if (!wsConnected) {
+            connectWS();
+        }
+        wsClient.poll();
+    }
+    
+    processAudio();
+}

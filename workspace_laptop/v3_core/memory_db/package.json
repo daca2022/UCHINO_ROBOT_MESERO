@@ -1,0 +1,21 @@
+{
+  "name": "@robot-mesero/memory-db",
+  "version": "3.0.0",
+  "description": "Persistencia híbrida: PostgreSQL + Redis + ChromaDB",
+  "type": "module",
+  "main": "src/index.mjs",
+  "scripts": {
+    "start": "echo 'Módulo de librería — usar desde backend_api'",
+    "test": "node --test tests/**/*.test.mjs",
+    "test:watch": "node --test --watch tests/**/*.test.mjs",
+    "migrate": "node src/migrations/run.mjs"
+  },
+  "dependencies": {
+    "chromadb": "^1.10.5",
+    "pg": "^8.20.0",
+    "redis": "^4.7.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

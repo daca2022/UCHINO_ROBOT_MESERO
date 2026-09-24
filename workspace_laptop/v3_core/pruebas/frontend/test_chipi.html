@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uchino — Prueba Rápida</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1040 100%);
+    color: #e0e0ff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    width: 480px;
+    max-width: 95vw;
+    background: rgba(20, 20, 50, 0.8);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px rgba(100, 0, 255, 0.15);
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #00f0ff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #8888aa;
+    margin-bottom: 20px;
+  }
+  .status-bar {
+    display: flex;
+    gap: 12px;
+    font-size: 0.75rem;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+  }
+  .dot-ok { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+  .dot-fail { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+  .dot-warn { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+  .chat-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+    border-radius: 12px;
+    padding: 12px;
+    height: 240px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .msg-user { color: #a855f7; margin-bottom: 8px; }
+  .msg-user::before { content: '🧑 '; }
+  .msg-chipi { color: #00f0ff; margin-bottom: 8px; }
+  .msg-chipi::before { content: '🤖 '; }
+  .msg-error { color: #ef4444; margin-bottom: 8px; }
+  .msg-system { color: #8888aa; font-style: italic; margin-bottom: 8px; font-size: 0.75rem; }
+  .emotion-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .emotion-tag {
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    background: rgba(0, 240, 255, 0.05);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #aaa;
+  }
+  .emotion-tag:hover { border-color: #a855f7; color: #e0e0ff; }
+  .emotion-tag.active {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+  }
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #e0e0ff;
+    font-size: 0.9rem;
+    outline: none;
+  }
+  input:focus { border-color: #a855f7; }
+  input::placeholder { color: #555577; }
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  audio { width: 100%; margin-top: 12px; border-radius: 8px; }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #555577;
+    margin-top: 8px;
+  }
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #a855f7;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🤖 Uchino — Prueba Rápida</h1>
+  <p class="subtitle">Pipeline: LLM (DeepSeek/Llama) → TTS (Kokoro/Piper)</p>
+  
+  <div class="status-bar" id="statusBar">Cargando...</div>
+  
+  <div class="emotion-tags" id="emotionTags">
+    <span class="emotion-tag active" data-emotion="feliz">😊 feliz</span>
+    <span class="emotion-tag" data-emotion="emocionado">🤩 emocionado</span>
+    <span class="emotion-tag" data-emotion="triste">😢 triste</span>
+    <span class="emotion-tag" data-emotion="sorprendido">😲 sorprendido</span>
+    <span class="emotion-tag" data-emotion="pensando">🤔 pensando</span>
+    <span class="emotion-tag" data-emotion="guiño">😉 guiño</span>
+    <span class="emotion-tag" data-emotion="celebrando">🎉 celebrando</span>
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    <div class="msg-system">Bienvenido. Escribe un mensaje para Uchino y escucha su respuesta.</div>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="msgInput" placeholder="Ej: Hola Uchino, ¿qué me recomiendas?" autofocus>
+    <button id="btnSend" onclick="sendMessage()">Enviar</button>
+  </div>
+
+  <audio id="audioPlayer" controls></audio>
+  <div class="meta">
+    <span id="llmInfo"></span>
+    <span id="ttsInfo"></span>
+  </div>
+</div>
+
+<script>
+let selectedEmotion = 'feliz';
+let isProcessing = false;
+
+document.querySelectorAll('.emotion-tag').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.emotion-tag').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    selectedEmotion = el.dataset.emotion;
+  });
+});
+
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+async function checkStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const s = document.getElementById('statusBar');
+    const llmOk = d.llm?.primary;
+    const ttsOk = d.tts?.piper || d.tts?.kokoro;
+    s.innerHTML = `
+      <span><span class="status-dot ${llmOk ? 'dot-ok' : 'dot-fail'}"></span>LLM: ${d.llm?.active || '—'}</span>
+      <span><span class="status-dot ${ttsOk ? 'dot-ok' : 'dot-fail'}"></span>Kokoro: ${d.tts?.kokoro ? '✅' : '⚠️'}</span>
+      <span><span class="status-dot ${d.tts?.piper ? 'dot-ok' : 'dot-fail'}"></span>Piper: ${d.tts?.piper ? '✅' : '❌'}</span>
+    `;
+  } catch(e) {
+    document.getElementById('statusBar').innerHTML = `<span class="dot-fail"></span> Backend no disponible`;
+  }
+}
+
+async function sendMessage() {
+  if (isProcessing) return;
+  const input = document.getElementById('msgInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  isProcessing = true;
+  document.getElementById('btnSend').disabled = true;
+  input.disabled = true;
+
+  const chatBox = document.getElementById('chatBox');
+  chatBox.innerHTML += `<div class="msg-user">${escapeHtml(msg)}</div>`;
+  chatBox.innerHTML += `<div class="msg-chipi loading">Uchino está pensando...</div>`;
+  chatBox.scrollTop = chatBox.scrollHeight;
+  input.value = '';
+
+  try {
+    // Step 1: LLM
+    const llmRes = await fetch('/api/llm/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const llmData = await llmRes.json();
+    
+    // Remove loading
+    chatBox.querySelector('.msg-chipi:last-child').classList.remove('loading');
+    const responseText = llmData.text || '(sin respuesta)';
+    chatBox.querySelector('.msg-chipi:last-child').innerHTML = escapeHtml(responseText);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    document.getElementById('llmInfo').textContent = `LLM: ${llmData.provider || 'DeepSeek V4 Flash'} | ${responseText.length} chars`;
+
+    // Step 2: TTS
+    const ttsRes = await fetch('/api/tts/speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: responseText, emotion: selectedEmotion })
+    });
+    
+    if (ttsRes.ok) {
+      const blob = await ttsRes.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = document.getElementById('audioPlayer');
+      audio.src = url;
+      audio.play();
+      document.getElementById('ttsInfo').textContent = `TTS: ${selectedEmotion} | ${(blob.size / 1024).toFixed(0)} KB`;
+      document.getElementById('ttsInfo').textContent += ` | ${selectedEmotion}`;
+    } else {
+      chatBox.innerHTML += `<div class="msg-error">⚠️ Error TTS: ${ttsRes.status}</div>`;
+    }
+  } catch(e) {
+    chatBox.querySelector('.msg-chipi:last-child')?.remove?.();
+    chatBox.innerHTML += `<div class="msg-error">❌ Error: ${e.message}</div>`;
+  }
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+  isProcessing = false;
+  document.getElementById('btnSend').disabled = false;
+  input.disabled = false;
+  input.focus();
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+checkStatus();
+setInterval(checkStatus, 10000);
+</script>
+</body>
+</html>

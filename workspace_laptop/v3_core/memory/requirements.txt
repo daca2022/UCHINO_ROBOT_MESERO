@@ -1,0 +1,5 @@
+# Mem0 Self-Hosted Memory Module — Python Dependencies
+# Installed via: pip install --break-system-packages -r requirements.txt
+mem0ai>=2.0.0
+chromadb>=1.5.0
+google-genai>=2.0.0

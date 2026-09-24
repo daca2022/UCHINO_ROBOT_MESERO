@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+log/
+data/*.db
+data/*.sqlite*
+*.log
+__pycache__/
+.pytest_cache/
+*.pyc
+models/*.onnx
+models/*.pth
+wav2vec2_checkpoints/
+wav2vec2_models/

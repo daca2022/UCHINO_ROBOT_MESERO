@@ -1,0 +1,79 @@
+# ── Node.js ──────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Python ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*$py.class
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+.Python
+build/
+dist/
+*.egg-info/
+
+# ── Entorno ──────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Datos generados ──────────────────────────────
+vision/face_db/*.db
+data/
+memoria/sesiones/
+*.sqlite
+*.sqlite3
+
+# ── Docker volumes ────────────────────────────────
+grafana-data/
+mosquitto-data/
+mosquitto-log/
+nodered-data/
+
+# ── Cloudflare ───────────────────────────────────
+.cloudflare/*.json
+*.json.bak
+
+# ── Logs ─────────────────────────────────────────
+logs/
+*.log
+*.log.*
+
+# ── IDE ──────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Modelos YOLO (son grandes, descargar en runtime)
+*.pt
+!vision/models/.gitkeep
+
+# ── Modelos pesados locales (wav2vec2, speechbrain, etc.) ──
+wav2vec2_models/
+*.ckpt
+*.onnx
+*.bin
+*.safetensors
+.huggingface/
+
+# ── Estado runtime ─────────────────────────────────
+*.pid
+.orchestrator.pid
+.backend.pid
+.~lock.*
+# ── Directorios accidentales de tilde ──
+# (antes existia v3_core/~/, renombrado a wav2vec2_models/)

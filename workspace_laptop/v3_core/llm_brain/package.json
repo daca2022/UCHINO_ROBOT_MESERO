@@ -1,0 +1,17 @@
+{
+  "name": "@robot-mesero/llm-brain",
+  "version": "3.0.0",
+  "description": "Cerebro multimodal — Orquestación LLM, audio, visión y function calling",
+  "type": "module",
+  "main": "src/index.mjs",
+  "scripts": {
+    "start": "echo 'Módulo de librería — usar desde backend_api o tests'",
+    "test": "node --test tests/**/*.test.mjs",
+    "test:watch": "node --test --watch tests/**/*.test.mjs"
+  },
+  "dependencies": {
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

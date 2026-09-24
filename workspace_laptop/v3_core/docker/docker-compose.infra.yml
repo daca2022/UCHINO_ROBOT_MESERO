@@ -1,0 +1,97 @@
+version: '3.8'
+# ═══════════════════════════════════════════════════════════
+# Infraestructura Robot Mesero Chipi — Docker Compose
+# Solo servicios de datos. La app corre nativa en la laptop.
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ── PostgreSQL (Analytics + Reportes) ──────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: chipi_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: chipi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: robot_mesero
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../memory_db/src/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chipi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Caché en tiempo real) ───────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: chipi_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── ChromaDB (Memoria vectorial / RAG) ─────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chipi_chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadata:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+
+  # ── InfluxDB (Telemetría series temporales) ────────────────
+  influxdb:
+    image: influxdb:2-alpine
+    container_name: chipi_influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: chipi
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_TOKEN}
+      DOCKER_INFLUXDB_INIT_ORG: utec
+      DOCKER_INFLUXDB_INIT_BUCKET: robot_telemetry
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # ── Grafana (Dashboards) ───────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: chipi_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - postgres
+      - influxdb
+
+volumes:
+  pgdata:
+  redisdata:
+  chromadata:
+  influxdata:
+  grafanadata:
+  influxdb_data:

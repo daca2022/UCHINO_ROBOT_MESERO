@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>🤖 UCHINO — Conversación en Vivo</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+  h1 { text-align: center; color: #e94560; }
+  #status { text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+  .connected { background: #16c79a; color: #000; }
+  .disconnected { background: #e94560; }
+  #chat { max-width: 800px; margin: 0 auto; }
+  .msg { padding: 12px 16px; border-radius: 12px; margin: 10px 0; max-width: 80%; }
+  .user { background: #16213e; margin-left: auto; text-align: right; }
+  .chipi { background: #0f3460; margin-right: auto; }
+  .time { font-size: 11px; color: #888; margin-top: 4px; }
+  .label { font-weight: bold; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }
+  .user .label { color: #16c79a; }
+  .chipi .label { color: #e94560; }
+  #controls { text-align: center; margin: 20px 0; }
+  button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
+  #btnConnect { background: #16c79a; color: #000; }
+  #btnSpeak { background: #e94560; color: #fff; display: none; }
+  #manualInput { width: 100%; max-width: 600px; padding: 10px; font-size: 16px; border-radius: 8px; border: none; margin: 10px auto; display: block; }
+</style>
+</head>
+<body>
+<h1>🤖 UCHINO — Conversación en Vivo</h1>
+<div id="status" class="disconnected">🔴 Desconectado</div>
+
+<div id="controls">
+  <button id="btnConnect" onclick="connect()">🔗 Conectar a Uchino</button>
+  <button id="btnSpeak" onclick="speakLast()">🔊 Repetir última respuesta</button>
+</div>
+
+<input id="manualInput" placeholder="Escribe algo y presiona Enter..." onkeypress="if(event.key==='Enter')sendManual()">
+
+<div id="chat"></div>
+
+<script>
+let ws = null;
+let lastResponse = '';
+const synth = window.speechSynthesis;
+const statusEl = document.getElementById('status');
+const chatEl = document.getElementById('chat');
+
+function log(msg, type) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  const time = new Date().toLocaleTimeString('es-PE');
+  const label = type === 'user' ? '🗣️ Tú' : '🤖 Uchino';
+  div.innerHTML = `<div class="label">${label}</div>${msg}<div class="time">${time}</div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function speak(text) {
+  if (!text) return;
+  // Cancelar cualquier habla anterior
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-PE';
+  u.rate = 1.1;
+  u.pitch = 1.0;
+  // Buscar voz en español
+  const voices = synth.getVoices();
+  const esVoice = voices.find(v => v.lang.startsWith('es'));
+  if (esVoice) u.voice = esVoice;
+  synth.speak(u);
+}
+
+function connect() {
+  ws = new WebSocket('ws://localhost:3005/ws/robot');
+  
+  ws.onopen = () => {
+    statusEl.textContent = '🟢 Conectado a Uchino (ESP32 audio stream)';
+    statusEl.className = 'connected';
+    document.getElementById('btnConnect').style.display = 'none';
+    document.getElementById('btnSpeak').style.display = 'inline-block';
+    log('Conectado. Habla al ESP32 o escribe abajo.', 'chipi');
+  };
+  
+  ws.onmessage = (event) => {
+    if (typeof event.data === 'string') {
+      // JSON heartbeat o metadata
+      try {
+        const data = JSON.parse(event.data);
+        if (data.confirmed) {
+          log(data.confirmed, 'user');
+        }
+      } catch(e) {
+        // ignore
+      }
+    } else {
+      // Audio binary — ignorar, el TTS va por chat API
+    }
+  };
+  
+  ws.onclose = () => {
+    statusEl.textContent = '🔴 Desconectado';
+    statusEl.className = 'disconnected';
+    document.getElementById('btnConnect').style.display = 'inline-block';
+    document.getElementById('btnSpeak').style.display = 'none';
+  };
+  
+  ws.onerror = (e) => {
+    statusEl.textContent = '💥 Error de conexión';
+    statusEl.className = 'disconnected';
+  };
+}
+
+async function sendManual() {
+  const input = document.getElementById('manualInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  log(text, 'user');
+  
+  try {
+    const res = await fetch('http://localhost:3005/api/llm/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, session_id: 'web-ui' })
+    });
+    const data = await res.json();
+    const response = data.text || data.error || 'Sin respuesta';
+    log(response, 'chipi');
+    lastResponse = response;
+    speak(response);
+  } catch (e) {
+    log('Error: ' + e.message, 'chipi');
+  }
+}
+
+function speakLast() {
+  speak(lastResponse);
+}
+
+// Cargar voces
+synth.getVoices();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL-Robot
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: chipi
+    database: robot_mesero
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+    isDefault: true
+    editable: true

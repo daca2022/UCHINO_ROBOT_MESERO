@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: uchino-pln-demo
+    runtime: node
+    rootDir: workspace_laptop/v3_core
+    buildCommand: >-
+      npm --prefix frontend_ui ci
+      && npm --prefix frontend_ui run build
+      && npm --prefix backend_api ci
+    startCommand: node backend_api/src/server.mjs
+    healthCheckPath: /api/status
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: SQLITE_PATH
+        value: ./data/robot_mesero.db
+      - key: VISION_MOCK
+        value: "true"
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: CHROMA_HOST
+        sync: false
+      - key: CHROMA_PORT
+        value: "8000"

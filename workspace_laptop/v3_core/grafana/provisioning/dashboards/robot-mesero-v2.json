@@ -1,0 +1,299 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "showHeader": "auto"
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as pedidos_hoy, SUM(total)::numeric as ventas FROM pedidos WHERE DATE(created_at) = CURRENT_DATE",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "📊 Estadísticas Hoy",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisSide": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT DATE(created_at) as fecha, COUNT(*) as pedidos FROM pedidos WHERE created_at > NOW() - INTERVAL '30 days' GROUP BY DATE(created_at) ORDER BY fecha",
+          "refId": "A",
+          "format": "timeseries"
+        }
+      ],
+      "title": "📈 Pedidos Últimos 30 Días",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {
+        "showHeader": "auto",
+        "sortBy": []
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT nombre, categoria, precio, COUNT(*) as vendidos FROM menu_items mi JOIN pedidos p ON p.platos @> jsonb_build_array(jsonb_build_object('id', mi.id)) WHERE DATE(p.created_at) = CURRENT_DATE GROUP BY mi.id, nombre, categoria, precio ORDER BY vendidos DESC LIMIT 10",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "🍽️ Platos Populares Hoy",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 5},
+              {"color": "green", "value": 10}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+      "id": 4,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"values": false, "fields": "", "calcs": ["lastNotNull"]}, "text": {}, "textMode": "auto"},
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(DISTINCT mesa) as mesas_atendidas FROM pedidos WHERE DATE(created_at) = CURRENT_DATE",
+          "refId": "A"
+        }
+      ],
+      "title": "🪑 Mesas Atendidas",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 12},
+      "id": 5,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"values": false, "fields": "", "calcs": ["lastNotNull"]}, "text": {}, "textMode": "auto"},
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total)::numeric as ventas_hoy FROM pedidos WHERE DATE(created_at) = CURRENT_DATE",
+          "refId": "A"
+        }
+      ],
+      "title": "💰 Ventas Hoy",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 6,
+      "options": {
+        "showHeader": "auto",
+        "sortBy": []
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT id, mesa, estado, total, created_at FROM pedidos WHERE DATE(created_at) = CURRENT_DATE ORDER BY created_at DESC LIMIT 20",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "🕐 Últimos Pedidos",
+      "type": "table"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Estado",
+            "axisSide": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "ordinal"},
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {"group": "A", "mode": "normal"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "id": 7,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT estado, COUNT(*) as cantidad FROM pedidos WHERE DATE(created_at) = CURRENT_DATE GROUP BY estado",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "📊 Pedidos por Estado",
+      "type": "barchart"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "PostgreSQL-Robot"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Cantidad",
+            "axisSide": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {"tooltip": false, "viz": false, "legend": false},
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "ordinal"},
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "id": 8,
+      "options": {
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "pluginVersion": "9.5.3",
+      "targets": [
+        {
+          "rawSql": "SELECT categoria, COUNT(*) as cantidad FROM menu_items mi JOIN pedidos p ON p.platos @> jsonb_build_array(jsonb_build_object('id', mi.id)) WHERE DATE(p.created_at) = CURRENT_DATE GROUP BY categoria ORDER BY cantidad DESC",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "🍴 Pedidos por Categoría",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["robot", "chipi", "utec", "postgresql"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "🤖 Robot Mesero UTEC v2.0 — PostgreSQL",
+  "uid": "robot-mesero-v2",
+  "version": 1,
+  "weekStart": ""
+}

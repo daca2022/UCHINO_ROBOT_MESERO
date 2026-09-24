@@ -1,0 +1,13 @@
+{
+  "name": "@robot-mesero/vision",
+  "version": "1.0.0",
+  "description": "Vision on-demand module — RGB USB camera frame capture + OpenRouter vision analysis",
+  "type": "module",
+  "main": "vision_manager.mjs",
+  "exports": {
+    ".": "./vision_manager.mjs",
+    "./capture-node": "./vision_capture_node.py"
+  },
+  "keywords": ["robot-mesero", "vision", "rgb-camera", "openrouter-vision"],
+  "license": "MIT"
+}

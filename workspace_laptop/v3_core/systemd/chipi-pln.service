@@ -1,0 +1,25 @@
+[Unit]
+Description=Chipi PLN Voice Pipeline Service
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=david
+Group=david
+WorkingDirectory=/home/david/chipi_workspace_pln/v3_core
+Environment=PYTHONPATH=/home/david/chipi_workspace_pln
+EnvironmentFile=/home/david/chipi_workspace_pln/v3_core/.env
+ExecStart=/usr/bin/python3 -m pln.main
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=chipi-pln
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
