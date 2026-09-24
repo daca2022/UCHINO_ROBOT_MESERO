@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "Si utilizas UCHINO Robot Mesero en una tesis, curso o proyecto, cita esta publicación."
+title: "UCHINO Robot Mesero"
+type: software
+version: "3.0.0"
+date-released: 2026-09-24
+repository-code: "https://github.com/daca2022/UCHINO_ROBOT_MESERO"
+license: MIT
+authors:
+  - name: "UCHINO Robot Mesero Project"

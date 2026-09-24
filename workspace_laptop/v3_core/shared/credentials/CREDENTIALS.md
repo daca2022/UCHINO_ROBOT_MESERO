@@ -1,7 +1,8 @@
 # Credenciales del Sistema — Robot Mesero Uchino
 
 > **ADVERTENCIA:** Este archivo lista las variables de entorno requeridas.
-> **LOS VALORES REALES ESTÁN EN `v3_core/.env` (gitignored).**
+> **LOS VALORES REALES SE GUARDAN EN `workspace_laptop/v3_core/.env` (gitignored).**
+> En una instalación nueva, copia `.env.example` a `.env` y completa solo lo que uses.
 > **NO escribir contraseñas en texto plano en archivos .md.**
 
 ## Referencia de Variables de Entorno
@@ -14,8 +15,12 @@
 | `WIFI_PASSWORD` | Password de red WiFi ESP32 | — |
 | `RPI5_PASSWORD` | Password SSH RPi5 | — |
 | `OPENROUTER_API_KEY` | API Key de OpenRouter | — |
-| `OPENROUTER_VISION_FALLBACK_MODEL` | Modelo VLM backup (Qwen3 VL 8B) | qwen/qwen3-vl-8b-instruct |
+| `OPENROUTER_VISION_MODEL` | Modelo VLM backup (Qwen3 VL 8B) | qwen/qwen3-vl-8b-instruct |
 | `JWT_SECRET` | Secreto JWT para auth | — |
+| `ADMIN_USER` | Usuario del panel `/admin` y Cocina | admin |
+| `ADMIN_PASSWORD` | Contraseña del panel `/admin` y Cocina | — |
+| `ESPEAK_BIN` | Ejecutable TTS de sistema | espeak-ng |
+| `VISION_MOCK` | Usa visión simulada sin cámara | true |
 
 ## Bases de Datos
 
@@ -58,6 +63,7 @@
 - **Modelo:** ./models/piper/es_ES-davefx-medium.onnx
 - **Config:** ./models/piper/es_ES-davefx-medium.onnx.json
 - **Output rate:** 22050
+- **Fallback de sistema:** `ESPEAK_BIN` + `ffmpeg`; ambos deben estar instalados para marcar TTS disponible.
 
 ## ESP32 / Red
 
@@ -65,7 +71,7 @@
 |-----------|-------|
 | WiFi SSID | `${WIFI_SSID}` |
 | WiFi Password | `${WIFI_PASSWORD}` (definir en .env) |
-| ESP32 WebSocket | `${BACKEND_WS_URL}` o backend `:3005/ws/robot` |
+| ESP32 WebSocket | `${ESP32_WS_URL}` o backend `:3005/ws/robot` |
 
 ## RPi5 (SSH)
 
@@ -83,12 +89,20 @@
 |-----------|-------|
 | JWT Secret | `${JWT_SECRET}` (definir en .env) |
 
+## Qué es obligatorio en cada modo
+
+- **Solo interfaz:** no requiere claves; `npm run dev` permite revisar la navegación visual.
+- **Web local completa:** requiere `POSTGRES_*`, `REDIS_*`, `CHROMA_*`, `JWT_SECRET`, `ADMIN_PASSWORD` y Docker.
+- **LLM y visión cloud:** además requiere `OPENROUTER_API_KEY`.
+- **Voz:** requiere los modelos/binarios locales documentados en `TTS Local (Piper)` y `WhisperLiveKit`; no se distribuyen en este repositorio.
+- **Robot físico:** requiere red, RPi5, ESP32 y ROS2 externos; este repositorio no los contiene ni los activa.
+
 ## Configuración del Restaurante
 
 | Parámetro | Valor |
 |-----------|-------|
 | Nombre | Cafetería UTEC |
-| Mesas | 9 aprox. |
+| Mesas | 20 configuradas en `.env.example` |
 | Robot | Uchino |
 
 ## Puertos del Sistema

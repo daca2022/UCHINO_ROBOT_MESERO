@@ -1,66 +1,92 @@
 # UCHINO Robot Mesero
 
-Publicación reproducible del PLN y la interfaz web del robot mesero UCHINO.
+Proyecto de tesis y publicación abierta del PLN y la interfaz web del robot mesero UCHINO. Esta copia está preparada para que una persona pueda revisar las páginas, ejecutar el backend local y entender qué servicios externos debe configurar.
 
-La ruta técnica `workspace_laptop/v3_core` se conserva para que los imports y los scripts sigan funcionando; la tabla siguiente da el nombre claro de cada módulo.
+## Qué contiene esta publicación
 
-## Mapa de la publicación
-
-| Ruta | Nombre entendible | Función |
+| Ruta | Nombre claro | Para qué sirve |
 |---|---|---|
-| `workspace_laptop/v3_core/frontend_ui` | Interfaz web | Páginas `/robot`, `/cocina` y `/admin` |
+| `workspace_laptop/v3_core/frontend_ui` | Interfaz web | Pantallas `/robot`, `/cocina` y `/admin` |
 | `workspace_laptop/v3_core/backend_api` | Backend y API | Express, WebSocket y reglas de negocio |
-| `workspace_laptop/v3_core/memory_db` | Memoria y PostgreSQL | Migraciones y repositorios |
+| `workspace_laptop/v3_core/memory_db` | Memoria y datos | PostgreSQL, SQLite, migraciones y repositorios |
 | `workspace_laptop/v3_core/orchestrator` | Orquestador | FastAPI y coordinación del diálogo |
-| `workspace_laptop/v3_core/dialogue` | Diálogo | Estados conversacionales y clientes LLM |
-| `workspace_laptop/v3_core/pln` | Lenguaje natural | Intenciones y extracción de pedidos |
-| `workspace_laptop/v3_core/ros2_control` | Integración ROS2 | Contratos de recorrido, sin hardware incluido |
-| `workspace_laptop/v3_core/docker` | Infraestructura | PostgreSQL, Redis, ChromaDB, Grafana e InfluxDB |
-| `render.yaml` | Despliegue cloud | Servicio web para Render |
+| `workspace_laptop/v3_core/dialogue` / `pln` | Lenguaje natural | Estados conversacionales e intenciones |
+| `workspace_laptop/v3_core/docker` | Infraestructura | PostgreSQL, Redis, ChromaDB, InfluxDB y Grafana |
+| `render.yaml` | Despliegue cloud | Configuración base para Render |
 
-Esta es la publicación **PLN/web**, no el workspace completo del robot. No incluye navegación física, firmware ESP32, archivos de `archive`, checkpoints de modelos, credenciales ni artefactos de compilación.
+Es la publicación PLN/web. No incluye navegación física, firmware ESP32, modelos pesados, credenciales ni artefactos de compilación. La simulación y la interfaz funcionan sin hardware; el robot físico requiere el workspace ROS2/RPi5 correspondiente y una red real.
 
-Usa `workspace_laptop/v3_core/.env.example` y `workspace_laptop/v3_core/shared/credentials/CREDENTIALS.md` como referencia de configuración. Las claves reales solo se agregan como secretos del proveedor de despliegue.
+## Comenzar en pocos pasos
 
-## Desarrollo local
+La guía completa está en [`docs/GUIA_PUBLICA.md`](docs/GUIA_PUBLICA.md). El camino corto es:
 
 ```bash
-cd workspace_laptop/v3_core/frontend_ui
-npm install
-npm run build
-
-cd ..
-bash start_robot.sh
-```
-
-El backend sirve `/robot`, `/cocina` y `/admin` en el puerto `3005` cuando la configuración local está completa.
-
-## Qué puede hacer otra persona al clonarlo
-
-Con Node.js 20/22 puede instalar y compilar la interfaz sin recibir ninguna clave:
-
-```bash
-cd workspace_laptop/v3_core/frontend_ui
-npm ci
-npm run build
-```
-
-Eso genera las páginas web. Para una vista visual puede ejecutar después `npm run dev`, pero los botones que consultan datos necesitan el backend. Para que las páginas hablen con el backend y guarden pedidos necesita levantar la infraestructura local y el backend:
-
-```bash
-cd ..
+git clone https://github.com/daca2022/UCHINO_ROBOT_MESERO.git
+cd UCHINO_ROBOT_MESERO/workspace_laptop/v3_core
 cp .env.example .env
-# Editar .env con valores propios; nunca copiar claves desde este repositorio.
-bash start_robot.sh
+# Edita .env: ADMIN_PASSWORD, JWT_SECRET, POSTGRES_PASSWORD,
+# INFLUX_TOKEN y GF_SECURITY_ADMIN_PASSWORD.
+bash start_web.sh
 ```
 
-Sin `OPENROUTER_API_KEY`, la interfaz y las rutas determinísticas pueden abrirse, pero las respuestas del LLM y la visión cloud no estarán disponibles. Sin PostgreSQL, Redis y ChromaDB, las funciones de memoria, analítica y persistencia no estarán completas. La navegación real no se activa: este repositorio usa el modo de simulación y no contiene el robot físico.
+Después abre:
 
-En otras palabras: el clon trae el código y puede construir la UI, pero no trae servicios de datos ni una API compartida. Cada persona debe levantar Docker y usar sus propias credenciales para obtener una instalación local completa.
+- `http://localhost:3005/robot`
+- `http://localhost:3005/cocina`
+- `http://localhost:3005/admin`
 
-## Credenciales y API
+Para comprobar el servicio:
 
-- `OPENROUTER_API_KEY` es la clave personal del usuario para el LLM. Se lee únicamente en el backend mediante `process.env`; no se envía al navegador ni se guarda en GitHub.
-- `ADMIN_USER`, `ADMIN_PASSWORD` y `JWT_SECRET` protegen `/admin`. El usuario inicial recomendado es `admin`, con una contraseña propia.
-- `POSTGRES_*`, `REDIS_*`, `CHROMA_*` e `INFLUX_*` apuntan a servicios locales o administrados por quien despliega.
-- En Render, `render.yaml` declara las variables sensibles con `sync: false`; el propietario las introduce en el panel de Render. El repositorio no contiene ninguna clave real.
+```bash
+curl http://localhost:3005/api/status
+```
+
+## Credenciales y servicios opcionales
+
+Las variables se declaran en [`workspace_laptop/v3_core/.env.example`](workspace_laptop/v3_core/.env.example). Los valores reales se guardan únicamente en el archivo local ignorado `.env`; la explicación de cada variable está en [`CREDENTIALS.md`](workspace_laptop/v3_core/shared/credentials/CREDENTIALS.md).
+
+La interfaz y el backend pueden abrirse sin una clave de LLM. Para respuestas generativas y visión cloud se necesita una clave propia de OpenRouter. TTS local, STT WhisperLiveKit, Ollama, cámara, ROS2 y el robot físico son componentes adicionales: sus modelos, entornos o equipos no se distribuyen en este repositorio. La guía marca cada requisito para no confundir “página visible” con “sistema de voz completo”.
+
+## Scripts principales
+
+| Script | Uso | ¿Es necesario para revisar la web? |
+|---|---|---|
+| `start_web.sh` | Docker + API + páginas web | Sí, es el arranque recomendado |
+| `start_robot.sh` | Stack completo local, incluidos sidecars de voz si están instalados | No; requiere dependencias externas |
+| `start_ui.sh` | Vite en desarrollo o preview | Solo para desarrollar la interfaz |
+| `start_pln.sh` | Servicio PLN Python aislado | Opcional |
+| `start_pipeline.sh` | Wake word y limpieza de audio | Opcional; necesita `WhisperLiveKit/venv` |
+| `start_stt.sh` | WhisperLiveKit en el puerto 8002 | Opcional; necesita instalación y modelo |
+| `stop_robot.sh` | Detiene API, sidecar y Docker | Úsalo al terminar una sesión local |
+
+Los scripts de `scripts/` son utilidades de pruebas, migración o diagnóstico; no son pasos adicionales obligatorios del arranque básico.
+
+## Capturas de la aplicación
+
+Las imágenes se tomaron desde el build local actual en una ventana de 1280×720. Robot y Cocina muestran estados degradados observables sin sesión autenticada: Robot indica `Sin conexión` y Cocina indica que su cola no se pudo actualizar. No se presentan como una aceptación saludable del backend; la verificación HTTP separada está descrita en la guía.
+
+### Robot
+
+![Pantalla Robot](docs/screenshots/robot.png)
+
+### Cocina
+
+![KDS de Cocina](docs/screenshots/cocina.png)
+
+### Administración
+
+![Acceso al panel de Administración](docs/screenshots/admin.png)
+
+## Estado reproducible
+
+- Build de la interfaz: `npm --prefix workspace_laptop/v3_core/frontend_ui run build` verificado.
+- Backend y rutas `/robot`, `/cocina`, `/admin`: verificados localmente con Node.js 22.
+- Persistencia local: SQLite se crea automáticamente; PostgreSQL, Redis, ChromaDB, InfluxDB y Grafana se levantan con Docker.
+- Cloud: `render.yaml` contiene el servicio Node y marca secretos con `sync: false`; para producción se deben configurar también las bases administradas.
+- Hardware y voz: no se declaran como disponibles si faltan sus modelos, entornos o equipos.
+
+## Para tesis y contribuciones
+
+Consulta [`docs/GUIA_PUBLICA.md`](docs/GUIA_PUBLICA.md) para arquitectura, pruebas, variables, modos de ejecución, publicación cloud y límites de la demostración. Las reglas para colaborar están en [`CONTRIBUTING.md`](CONTRIBUTING.md) y la licencia en [`LICENSE`](LICENSE).
+
+Esta guía y este README son la documentación pública de referencia. Las notas que viven dentro de cada módulo son documentación técnica o histórica y no sustituyen el quickstart.
