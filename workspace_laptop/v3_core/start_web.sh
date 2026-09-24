@@ -29,7 +29,8 @@ fi
 
 command -v docker >/dev/null 2>&1 || { echo "Docker no está instalado."; exit 1; }
 command -v node >/dev/null 2>&1 || { echo "Node.js no está instalado."; exit 1; }
-node -v | grep -E 'v(20|21|22|23|24)\.' >/dev/null || { echo "Se requiere Node.js 20 o superior."; exit 1; }
+node_major="$(node -p "process.versions.node.split('.')[0]")"
+[ "$node_major" -ge 20 ] || { echo "Se requiere Node.js 20 o superior."; exit 1; }
 
 echo "[1/4] Instalando dependencias Node..."
 npm --prefix memory_db ci
