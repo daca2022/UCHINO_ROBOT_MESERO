@@ -63,7 +63,7 @@ Los scripts de `scripts/` son utilidades de pruebas, migración o diagnóstico; 
 
 ## Capturas de la aplicación
 
-Las imágenes se tomaron desde el build local actual en una ventana de 1280×720. Robot y Cocina muestran estados degradados observables sin sesión autenticada: Robot indica `Sin conexión` y Cocina indica que su cola no se pudo actualizar. No se presentan como una aceptación saludable del backend; la verificación HTTP separada está descrita en la guía.
+Las capturas principales se tomaron desde el build local actual en una ventana de 1280×720; las variantes `*-mobile.png` usan 375×667. Robot y Cocina muestran estados degradados observables sin sesión autenticada: Robot indica `Sin conexión` y Cocina indica que su cola no se pudo actualizar. No se presentan como una aceptación saludable del backend; la verificación HTTP separada está descrita en la guía.
 
 ### Robot
 
