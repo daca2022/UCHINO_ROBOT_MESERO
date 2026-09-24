@@ -68,6 +68,8 @@ Abre estas direcciones:
 | `http://localhost:3005/admin` | Administración y métricas |
 | `http://localhost:3000` | Grafana, si el contenedor está saludable |
 
+Para probar la voz en una laptop, abre `/robot` en Chrome o Edge, concede el micrófono, selecciona una mesa cuando Administración la asigne y pulsa `Pedir por voz`. La respuesta se reproduce con el TTS local si está instalado o con la voz del navegador si no lo está.
+
 Verifica el backend con:
 
 ```bash
@@ -91,7 +93,21 @@ La plantilla visible es [`workspace_laptop/v3_core/.env.example`](../workspace_l
 
 En Render, las claves se introducen en el panel como variables `sync: false`; nunca se escriben en `render.yaml`.
 
-## 6. Qué está incluido y qué requiere preparación adicional
+## 6. Voz sin sorpresas: STT y TTS
+
+La publicación tiene dos niveles de voz para que la primera ejecución no quede bloqueada por una descarga de modelos:
+
+| Ruta | Qué usa | Qué debe hacer la persona que clona |
+|---|---|---|
+| STT base | `SpeechRecognition`/`webkitSpeechRecognition` del navegador | Abrir `/robot` en Chrome o Edge y aceptar el permiso del micrófono |
+| TTS base | `speechSynthesis` del navegador cuando el TTS local no está listo | Permitir audio en la pestaña; no necesita una API adicional |
+| STT/TTS avanzado | WhisperLiveKit + Piper/Kokoro y modelos locales | Instalar los entornos y modelos indicados en `CREDENTIALS.md` |
+
+El texto reconocido por el navegador entra en `/api/asr/process`, el mismo contrato que usa la pantalla táctil. Si el backend detecta un reproductor TTS local listo, lo usa primero; si no, la respuesta saneada se reproduce en el navegador. Esto hace funcional el recorrido de voz de demostración sin presentar un modelo grande como si estuviera incluido.
+
+El navegador debe ser compatible y tener permiso de micrófono. Si se necesita una ruta independiente del navegador, hay que instalar WhisperLiveKit y su modelo; no es una credencial que pueda sustituirse por una variable de `.env`.
+
+## 7. Qué está incluido y qué requiere preparación adicional
 
 | Componente | Estado en este repositorio | Qué falta para usarlo |
 |---|---|---|
@@ -100,15 +116,15 @@ En Render, las claves se introducen en el panel como variables `sync: false`; nu
 | PostgreSQL, Redis, ChromaDB, InfluxDB, Grafana | Definidos en Compose | Docker y credenciales locales |
 | SQLite | Se crea automáticamente | Nada adicional |
 | LLM OpenRouter | Integrado del lado servidor | Tu propia `OPENROUTER_API_KEY` |
-| TTS Piper/Kokoro | Integración de código | Binario, modelos y entorno local; no se distribuyen |
-| STT WhisperLiveKit | Script de integración | Clon/venv/modelo `large-v3-turbo`; no se distribuyen |
+| TTS Piper/Kokoro | Integración de código + fallback de navegador | Binario, modelos y entorno local para calidad avanzada; no se distribuyen |
+| STT WhisperLiveKit | Integración de streaming + fallback de navegador | Clon/venv/modelo `large-v3-turbo` para modo avanzado; no se distribuyen |
 | Visión | Mock disponible para demo | Cámara y clave cloud para visión real |
 | ROS2/Nav2 | No forma parte de este checkout web | Workspace de navegación, RPi5 y robot |
 | ESP32 | Excluido de esta publicación | Firmware y hardware externos |
 
 Por eso una persona puede reproducir las páginas y el backend, pero no debe interpretar el clon como una imagen completa del robot físico.
 
-## 7. Qué script usar
+## 8. Qué script usar
 
 `start_web.sh` es el único arranque necesario para revisar la publicación web. `start_robot.sh` conserva el flujo histórico de la instalación completa y trata de iniciar sidecars de voz; requiere dependencias que no están en el clon público. `start_ui.sh` es para desarrollar o previsualizar solo Vite. `start_pln.sh`, `start_pipeline.sh` y `start_stt.sh` son servicios aislados de PLN/audio y son opcionales. `stop_robot.sh` detiene la API, el sidecar y los contenedores registrados.
 
@@ -116,7 +132,7 @@ Los scripts de `scripts/` son herramientas auxiliares. No ejecutes todos indiscr
 
 La referencia pública canónica es esta guía y el `README.md` raíz. Los `README.md`, `STATUS.md` y notas dentro de módulos describen implementación o historiales específicos; no todos son un tutorial de instalación y algunos conservan rutas de desarrollo antiguas. Para reproducir la publicación usa siempre las rutas y comandos de esta guía.
 
-## 8. Pruebas y build
+## 9. Pruebas y build
 
 Build de la interfaz:
 
@@ -135,11 +151,13 @@ Si una prueba necesita PostgreSQL, Redis, ChromaDB o variables de entorno, arran
 
 En la copia pública actual, la suite histórica completa incluye casos que esperan el servicio en `localhost:3005` y un archivo de evidencia interno de Fase 13. Por eso no se presenta como una puerta verde automática del clon: en la verificación local observada quedaron 348 pruebas correctas y 5 casos dependientes de esas condiciones. El build de la interfaz y el smoke HTTP sí son reproducibles con los pasos anteriores.
 
-## 9. Capturas de referencia
+## 10. Capturas de referencia
 
-Las capturas versionadas están en [`docs/screenshots`](screenshots). La de Robot muestra el estado inicial sin conexión; `robot-mobile.png` y `cocina-mobile.png` documentan la vista estrecha. La de Cocina documenta explícitamente un estado degradado de la cola, para que una persona no confunda “sin pedidos” con “sin conexión”. La de Administración muestra el acceso protegido.
+Las capturas principales están en [`docs/screenshots`](screenshots): `robot-live.png` muestra el WebSocket conectado, `cocina-live.png` una cola autenticada sin pedidos y `admin-live.png` el dashboard protegido. Sus variantes `*-live-mobile.png` documentan la vista estrecha. Las imágenes sin el sufijo `-live` se conservan como estados de diagnóstico o acceso inicial.
 
-## 10. Publicación cloud
+La sesión que produjo las capturas fue local y no demuestra por sí sola que un robot físico, un dominio cloud o un modelo Whisper estén disponibles. La diferencia está escrita en cada sección para que una captura nunca se confunda con aceptación de hardware.
+
+## 11. Publicación cloud
 
 `render.yaml` describe un servicio Node que construye la interfaz y arranca `backend_api/src/server.mjs`. Para una demo cloud:
 
@@ -151,7 +169,7 @@ Las capturas versionadas están en [`docs/screenshots`](screenshots). La de Robo
 
 La publicación está preparada para esa ruta, pero no afirma que las bases administradas, el dominio, los secretos o un robot real ya estén contratados. La página cloud y el robot físico son entregas separadas.
 
-## 11. Para reproducir la tesis
+## 12. Para reproducir la tesis
 
 Conserva la versión de Node, las variables usadas y la salida de `curl /api/status` junto a la fecha de la prueba. Para una demostración reproducible, indica si el caso usa LLM real o mock, si TTS/STT están instalados y si la navegación es simulada. Esa distinción evita presentar una captura estática como aceptación de hardware.
 

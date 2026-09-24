@@ -129,9 +129,10 @@ export default function VoiceAsrButton({ mesa, sessionId, active, onStartRequest
       fetch('/api/tts/status', { cache: 'no-store' })
         .then(r => r.json())
         .then(s => {
-          ttsMuteRef.current = !!s.speaking;
+          const browserSpeaking = typeof window !== 'undefined' && Boolean(window.speechSynthesis?.speaking);
+          ttsMuteRef.current = Boolean(s.speaking) || browserSpeaking;
           if (!active || sessionClosedRef.current) return;
-          if (s.speaking) {
+          if (s.speaking || browserSpeaking) {
             if (recogRef.current && state === 'listening') {
               try { recogRef.current.stop(); } catch {}
             }

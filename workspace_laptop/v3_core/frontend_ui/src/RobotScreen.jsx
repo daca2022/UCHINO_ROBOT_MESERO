@@ -152,6 +152,27 @@ function cleanVisibleTranscript(value) {
     .replace(/`([^`]+)`/g, '$1');
 }
 
+function stopBrowserSpeech() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+async function speakBrowserFallback(text) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== 'function' || !String(text || '').trim()) return false;
+  const status = await fetch('/api/tts/status', { cache: 'no-store' })
+    .then(response => response.json())
+    .catch(() => ({ ready: false }));
+  if (status.ready) return false;
+  stopBrowserSpeech();
+  const utterance = new window.SpeechSynthesisUtterance(String(text).trim());
+  utterance.lang = 'es-PE';
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+  return true;
+}
+
 function modifierPrice(item, menuItems) {
   const menuItem = menuItems.find(candidate => candidate.id && item.product_id && candidate.id === item.product_id)
     || menuItems.find(candidate => candidate.nombre === item.nombre);
@@ -808,6 +829,7 @@ export default function RobotScreen() {
   }
 
   async function stopSpeech() {
+    stopBrowserSpeech();
     try {
       await postJson('/api/tts/stop', { session_id: getVoiceSessionId() });
       setVoiceState('idle');
@@ -824,8 +846,15 @@ export default function RobotScreen() {
       const data = await postJson('/api/tts/repeat', { session_id: sessionId });
       const displayText = data.display_text || data.text;
       if (displayText) setTranscript(`🤖 Uchino: ${displayText}`);
+      if (displayText) await speakBrowserFallback(data.speech_text || displayText);
       setVoiceState('playing');
     } catch (error) {
+      const fallbackText = lastSpeechResponse?.speech_text || lastSpeechResponse?.display_text;
+      if (fallbackText && await speakBrowserFallback(fallbackText)) {
+        setTranscript(`🤖 Uchino: ${lastSpeechResponse.display_text}`);
+        setVoiceState('playing');
+        return;
+      }
       setTranscript(`No pude repetir la respuesta: ${error.message}`);
     }
   }
@@ -1521,6 +1550,7 @@ export default function RobotScreen() {
     if (msg.type === 'asr_response') {
       const displayText = msg.display_text || msg.text;
       if (displayText) setTranscript(`🤖 Uchino: ${displayText}`);
+      if (displayText) void speakBrowserFallback(msg.speech_text || displayText);
       if (displayText) {
         setLastSpeechResponse({
           session_id: msg.session_id || getVoiceSessionId(),

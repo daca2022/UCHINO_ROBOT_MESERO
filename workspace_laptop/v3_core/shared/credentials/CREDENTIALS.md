@@ -63,7 +63,8 @@
 - **Modelo:** ./models/piper/es_ES-davefx-medium.onnx
 - **Config:** ./models/piper/es_ES-davefx-medium.onnx.json
 - **Output rate:** 22050
-- **Fallback de sistema:** `ESPEAK_BIN` + `ffmpeg`; ambos deben estar instalados para marcar TTS disponible.
+- **Fallback de sistema:** `ESPEAK_BIN` + `ffmpeg`; ambos deben estar instalados para marcar TTS local disponible.
+- **Fallback de navegador:** si Piper/Kokoro y el TTS de sistema no están instalados, `/robot` usa `speechSynthesis` del navegador para la demo.
 
 ## ESP32 / Red
 
@@ -94,7 +95,8 @@
 - **Solo interfaz:** no requiere claves; `npm run dev` permite revisar la navegación visual.
 - **Web local completa:** requiere `POSTGRES_*`, `REDIS_*`, `CHROMA_*`, `JWT_SECRET`, `ADMIN_PASSWORD` y Docker.
 - **LLM y visión cloud:** además requiere `OPENROUTER_API_KEY`.
-- **Voz:** requiere los modelos/binarios locales documentados en `TTS Local (Piper)` y `WhisperLiveKit`; no se distribuyen en este repositorio.
+- **Voz básica de demo:** Chrome/Edge, permiso de micrófono y audio; usa `SpeechRecognition` y `speechSynthesis` del navegador.
+- **Voz avanzada:** requiere los modelos/binarios locales documentados en `TTS Local (Piper)` y `WhisperLiveKit`; no se distribuyen en este repositorio.
 - **Robot físico:** requiere red, RPi5, ESP32 y ROS2 externos; este repositorio no los contiene ni los activa.
 
 ## Configuración del Restaurante
