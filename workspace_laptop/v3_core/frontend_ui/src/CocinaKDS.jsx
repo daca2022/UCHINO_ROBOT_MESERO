@@ -145,17 +145,17 @@ export default function CocinaKDS() {
             <span className="text-[10px] text-text-dim">KDS v3.0</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 sm:gap-6 ml-auto">
-          <StatBox label="En espera" value={counts.espera} color="text-neon-rose" />
-          <StatBox label="Preparando" value={counts.preparando} color="text-neon-amber" />
-          <StatBox label="Listos" value={counts.listo} color="text-neon-green" />
-          <time className="text-[10px] sm:text-xs text-text-secondary font-mono whitespace-nowrap" dateTime={clock.toISOString()}>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-6 ml-auto">
+          <StatBox label="En espera" value={cola.error ? '—' : counts.espera} color="text-neon-rose" />
+          <StatBox label="Preparando" value={cola.error ? '—' : counts.preparando} color="text-neon-amber" />
+          <StatBox label="Listos" value={cola.error ? '—' : counts.listo} color="text-neon-green" />
+          <time className="hidden text-[10px] sm:inline sm:text-xs text-text-secondary font-mono whitespace-nowrap" dateTime={clock.toISOString()}>
             {formatFullDateTime(clock)}
           </time>
           {token ? (
             <span className="rounded-lg border border-neon-green/40 bg-neon-green/10 px-2 py-1 text-[10px] text-neon-green">Operador autenticado</span>
           ) : (
-            <form onSubmit={authenticateKitchen} className="flex items-center gap-1" aria-label="Autenticar operador de cocina">
+            <form onSubmit={authenticateKitchen} className="flex w-full sm:w-auto items-center justify-end gap-1" aria-label="Autenticar operador de cocina">
               <input
                 value={kitchenUser}
                 onChange={event => setKitchenUser(event.target.value)}
@@ -307,7 +307,7 @@ export default function CocinaKDS() {
             </div>
           );
         })}
-        {filtered.length === 0 && (
+        {!cola.error && filtered.length === 0 && (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-text-dim">
             <span className="text-4xl mb-4 opacity-30">🍽️</span>
             <p className="text-sm">No hay pedidos en esta sección</p>

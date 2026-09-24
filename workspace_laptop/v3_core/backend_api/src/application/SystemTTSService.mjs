@@ -2,15 +2,20 @@
  * SystemTTSService.mjs - Drop-in replacement for PiperTTSService
  * Uses espeak-ng + ffmpeg for clean 16kHz mono PCM output
  */
-import { execSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import { readFileSync, unlinkSync } from 'fs';
 
-const ESPEAK_BIN = '/home/david/chipi_workspace_pln/archive/v2_openclaw/tools/piper_runtime/piper/espeak-ng';
+const ESPEAK_BIN = process.env.ESPEAK_BIN || 'espeak-ng';
+
+function executableAvailable(command) {
+  const result = spawnSync(command, ['--version'], { stdio: 'ignore' });
+  return result.status === 0;
+}
 
 export class SystemTTSService {
   constructor({ logger = console } = {}) {
     this.logger = logger;
-    this.disponible = true;
+    this.disponible = executableAvailable(ESPEAK_BIN) && executableAvailable('ffmpeg');
   }
 
   /**
@@ -22,22 +27,16 @@ export class SystemTTSService {
     const tmpPcm = '/tmp/tts_simple.pcm';
     
     try {
-      const safeText = texto.replace(/"/g, '\\"').replace(/\$/g, '');
-      
-      // 1. espeak-ng generates WAV at 22050Hz
-      execSync(`"${ESPEAK_BIN}" -v es -s 150 -p 50 -w "${tmpWav}" "${safeText}"`, {
-        timeout: 5000
+      execFileSync(ESPEAK_BIN, ['-v', 'es', '-s', '150', '-p', '50', '-w', tmpWav, texto], {
+        timeout: 5000,
+        stdio: 'ignore',
       });
-      
-      // 2. ffmpeg converts to raw 16kHz mono PCM
-      execSync(`ffmpeg -y -i "${tmpWav}" -ar 16000 -ac 1 -f s16le "${tmpPcm}" 2>/dev/null`, {
-        timeout: 5000
+      execFileSync('ffmpeg', ['-y', '-i', tmpWav, '-ar', '16000', '-ac', '1', '-f', 's16le', tmpPcm], {
+        timeout: 5000,
+        stdio: 'ignore',
       });
-      
-      // 3. Read raw PCM
       const pcmData = readFileSync(tmpPcm);
-      
-      // Cleanup
+
       try { unlinkSync(tmpWav); } catch {}
       try { unlinkSync(tmpPcm); } catch {}
       

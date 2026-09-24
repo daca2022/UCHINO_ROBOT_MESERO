@@ -1,4 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import pg from 'pg';
 import { createClient } from 'redis';
 import { ChromaClient } from 'chromadb';
@@ -361,7 +363,9 @@ export async function createServices({ sendToUI } = {}) {
     };
 
     // SQLite (operación en tiempo real)
-    const sqlite = new DatabaseSync(process.env.SQLITE_PATH || './data/robot_mesero.db');
+    const sqlitePath = process.env.SQLITE_PATH || './data/robot_mesero.db';
+    mkdirSync(dirname(sqlitePath), { recursive: true });
+    const sqlite = new DatabaseSync(sqlitePath);
     sqlite.exec(`
         CREATE TABLE IF NOT EXISTS pedidos (
             id TEXT PRIMARY KEY,

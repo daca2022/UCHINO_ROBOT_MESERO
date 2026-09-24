@@ -1629,8 +1629,11 @@ export default function RobotScreen() {
             <span>{robotState.data?.bateria ?? 85}%</span>
           </div>
           <div className={`w-2 h-2 rounded-full shrink-0 ${ws.connected ? 'bg-neon-green glow-pulse-green' : 'bg-neon-rose'}`} title={ws.connected ? 'WebSocket conectado' : 'WebSocket desconectado'} />
+          <span className={`inline text-[9px] sm:text-[10px] font-semibold shrink-0 ${ws.connected ? 'text-neon-green' : 'text-neon-rose'}`}>
+            {ws.connected ? 'Conectado' : 'Sin conexión'}
+          </span>
           {!hasAssignedAttention && (
-            <span className="max-w-36 truncate px-2 py-0.5 rounded bg-neon-green/15 text-neon-green text-[10px] font-semibold border border-neon-green/30 shrink-0">
+            <span className="hidden sm:inline-block max-w-36 truncate px-2 py-0.5 rounded bg-neon-green/15 text-neon-green text-[10px] font-semibold border border-neon-green/30 shrink-0">
               Robot Disponible
             </span>
           )}

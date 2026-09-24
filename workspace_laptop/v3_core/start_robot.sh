@@ -248,7 +248,7 @@ fi
 echo ""
 echo "Endpoints:"
 echo "  API:      http://localhost:${PORT:-3005}"
-echo "  Grafana:  http://localhost:3000 (admin/utec2026)"
+echo "  Grafana:  http://localhost:3000 (usa GF_SECURITY_ADMIN_USER/GF_SECURITY_ADMIN_PASSWORD de .env)"
 echo "  ChromaDB: http://localhost:8000"
 echo "  InfluxDB: http://localhost:8086"
 echo ""

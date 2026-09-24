@@ -21,6 +21,10 @@ services:
         value: ./data/robot_mesero.db
       - key: VISION_MOCK
         value: "true"
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
       - key: OPENROUTER_API_KEY
         sync: false
       - key: JWT_SECRET
@@ -43,3 +47,11 @@ services:
         sync: false
       - key: CHROMA_PORT
         value: "8000"
+      - key: INFLUX_URL
+        sync: false
+      - key: INFLUX_TOKEN
+        sync: false
+      - key: INFLUX_ORG
+        value: utec
+      - key: INFLUX_BUCKET
+        value: robot_telemetry

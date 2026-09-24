@@ -1,6 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+cd "$SCRIPT_DIR"
 echo "Iniciando Audio Pipeline (Wake Word + DeepFilterNet3 + SER proxy) en puerto 8001..."
-cd /home/david/chipi_workspace_pln/v3_core
+if [ ! -f WhisperLiveKit/venv/bin/activate ]; then
+  echo "Falta WhisperLiveKit/venv. Este servicio es opcional y no viene incluido en la publicación pública."
+  exit 2
+fi
 source WhisperLiveKit/venv/bin/activate
 
 # Wake Word Configuration (configurable via env)

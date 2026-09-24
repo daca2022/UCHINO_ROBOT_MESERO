@@ -11,7 +11,7 @@ if [ -f .env ]; then
     set +a
 fi
 
-export PYTHONPATH="/home/david/chipi_workspace_pln"
+export PYTHONPATH="$SCRIPT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
