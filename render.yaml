@@ -6,6 +6,8 @@ services:
     buildCommand: >-
       npm --prefix frontend_ui ci
       && npm --prefix frontend_ui run build
+      && npm --prefix memory_db ci
+      && npm --prefix ros2_control ci
       && npm --prefix backend_api ci
     startCommand: node backend_api/src/server.mjs
     healthCheckPath: /api/status

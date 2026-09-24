@@ -172,7 +172,9 @@ elif [ -n "$(listener_pid "${PORT:-3005}")" ]; then
     echo -e "   ${YELLOW}⚠️  Puerto ${PORT:-3005} ocupado por un proceso no saludable; no se crea un duplicado${NC}"
 else
     echo "   📦 Instalando dependencias..."
-    cd backend_api && npm install 2>/dev/null || true
+    npm --prefix memory_db ci 2>/dev/null || true
+    npm --prefix ros2_control ci 2>/dev/null || true
+    cd backend_api && npm ci 2>/dev/null || true
 
     echo "   🧪 Ejecutando tests..."
     npm test 2>/dev/null || echo -e "${YELLOW}   ⚠️  Algunos tests pueden necesitar DB${NC}"
