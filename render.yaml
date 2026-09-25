@@ -2,6 +2,7 @@ services:
   - type: web
     name: uchino-pln-demo
     runtime: node
+    plan: free
     rootDir: workspace_laptop/v3_core
     buildCommand: >-
       npm --prefix frontend_ui ci
@@ -9,7 +10,7 @@ services:
       && npm --prefix memory_db ci
       && npm --prefix ros2_control ci
       && npm --prefix backend_api ci
-    startCommand: node backend_api/src/server.mjs
+    startCommand: npm --prefix memory_db run migrate && node backend_api/src/server.mjs
     healthCheckPath: /api/status
     autoDeploy: true
     envVars:
