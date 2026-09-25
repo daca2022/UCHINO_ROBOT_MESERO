@@ -58,13 +58,18 @@
 | Ollama (local) | — | qwen3.5:9b (fallback terciario) |
 | Cloudflare Tunnel | (token en .env) | — |
 
-### TTS Local (Piper)
-- **Binario:** ./venv/bin/piper
-- **Modelo:** ./models/piper/es_ES-davefx-medium.onnx
-- **Config:** ./models/piper/es_ES-davefx-medium.onnx.json
-- **Output rate:** 22050
-- **Fallback de sistema:** `ESPEAK_BIN` + `ffmpeg`; ambos deben estar instalados para marcar TTS local disponible.
-- **Fallback de navegador:** si Piper/Kokoro y el TTS de sistema no están instalados, `/robot` usa `speechSynthesis` del navegador para la demo.
+### Voz local (opcional)
+
+La publicación no incluye binarios, entornos Python ni pesos grandes. La ruta
+recomendada para la primera ejecución es la voz del navegador. Las instrucciones
+con enlaces oficiales están en [`docs/GUIA_VOZ.md`](../../../../docs/GUIA_VOZ.md).
+
+- **TTS local principal del reproductor:** `tts/venv/bin/python3` con Kokoro.
+- **Modelo Kokoro:** se descarga desde `hexgrad/Kokoro-82M` al cargarlo por primera vez.
+- **Piper opcional:** `PIPER_BIN`, `PIPER_MODEL` y `PIPER_CONFIG` solo apuntan a una instalación externa; no descargan nada.
+- **Fallback de sistema:** `ESPEAK_BIN` + `ffmpeg` si la ruta que los usa está instalada.
+- **Fallback de navegador:** si no hay reproductor local listo, `/robot` usa `speechSynthesis`.
+- **STT local:** WhisperLiveKit y `large-v3-turbo` se instalan aparte; el navegador cubre la demo base.
 
 ## ESP32 / Red
 
@@ -96,7 +101,7 @@
 - **Web local completa:** requiere `POSTGRES_*`, `REDIS_*`, `CHROMA_*`, `JWT_SECRET`, `ADMIN_PASSWORD` y Docker.
 - **LLM y visión cloud:** además requiere `OPENROUTER_API_KEY`.
 - **Voz básica de demo:** Chrome/Edge, permiso de micrófono y audio; usa `SpeechRecognition` y `speechSynthesis` del navegador.
-- **Voz avanzada:** requiere los modelos/binarios locales documentados en `TTS Local (Piper)` y `WhisperLiveKit`; no se distribuyen en este repositorio.
+- **Voz avanzada:** requiere los modelos/binarios locales documentados en [`GUIA_VOZ.md`](../../../../docs/GUIA_VOZ.md) y `WhisperLiveKit`; no se distribuyen en este repositorio.
 - **Robot físico:** requiere red, RPi5, ESP32 y ROS2 externos; este repositorio no los contiene ni los activa.
 
 ## Configuración del Restaurante

@@ -2,7 +2,9 @@
 
 ## Propósito
 
-Almacena los archivos de modelos pre-entrenados que usa el sistema Uchino. Incluye modelos de TTS (Piper ONNX para sintesis de voz en espanol), modelos HuBERT para deteccion de wake word (OpenWakeWord), y el Modelfile para Ollama (Qwen3.5:9B como LLM local terciario).
+Documenta los modelos que usa el sistema Uchino. Los pesos grandes están
+ignorados por Git y se descargan siguiendo [`docs/GUIA_VOZ.md`](../../../docs/GUIA_VOZ.md);
+esta carpeta conserva configuraciones y referencias reproducibles.
 
 ## Tecnologías
 
@@ -12,8 +14,8 @@ Almacena los archivos de modelos pre-entrenados que usa el sistema Uchino. Inclu
 
 ## Archivos principales
 
-- `piper/es_ES-davefx-medium.onnx` — Modelo TTS Piper en espanol
-- `hubert/hubert_state.pt` — Modelo HuBERT para OpenWakeWord
+- `piper/es_ES-davefx-medium.onnx` — Voz Piper en español, **no incluida**; el JSON de configuración sí está versionado
+- `hubert/hubert_state.pt` — Modelo HuBERT para OpenWakeWord, **no incluido**
 - `chipi-mesero.Modelfile` — Definicion del modelo Ollama para Qwen3.5:9B
 
 ## Interacciones

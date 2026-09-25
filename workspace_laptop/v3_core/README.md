@@ -16,9 +16,16 @@ Sistema activo de inteligencia, backend, frontend y orquestacion del robot meser
 ## Arranque
 
 ```bash
-cd /home/david/chipi_workspace_pln/v3_core
-bash start_robot.sh
+cd UCHINO_ROBOT_MESERO/workspace_laptop/v3_core
+cp .env.example .env
+# Completa ADMIN_PASSWORD, JWT_SECRET y las claves locales de Docker.
+bash start_web.sh
 ```
+
+`start_web.sh` es el arranque público recomendado. `start_robot.sh` intenta
+levantar además los sidecars de voz y por eso requiere WhisperLiveKit, Python y
+modelos que no se distribuyen en el clon. Consulta [`GUIA_PUBLICA.md`](../../docs/GUIA_PUBLICA.md)
+y [`GUIA_VOZ.md`](../../docs/GUIA_VOZ.md) antes de activar esas rutas.
 
 ## Interfaces
 
@@ -53,12 +60,11 @@ Gemini y MiniMax quedan como referencias obsoletas en documentos antiguos o adap
 Los valores reales se leen desde:
 
 ```text
-v3_core/.env
+workspace_laptop/v3_core/.env
 ```
 
-No escribir claves en README ni codigo. Ver:
+No escribir claves en README ni código. Ver:
 
 ```text
-../docs_final/operacion/CREDENCIALES_Y_ACCESOS.md
+shared/credentials/CREDENTIALS.md
 ```
-

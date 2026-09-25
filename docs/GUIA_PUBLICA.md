@@ -95,17 +95,20 @@ En Render, las claves se introducen en el panel como variables `sync: false`; nu
 
 ## 6. Voz sin sorpresas: STT y TTS
 
-La publicación tiene dos niveles de voz para que la primera ejecución no quede bloqueada por una descarga de modelos:
+La publicación tiene una ruta base y dos opciones avanzadas para que la primera ejecución no quede bloqueada por una descarga de modelos:
 
 | Ruta | Qué usa | Qué debe hacer la persona que clona |
 |---|---|---|
 | STT base | `SpeechRecognition`/`webkitSpeechRecognition` del navegador | Abrir `/robot` en Chrome o Edge y aceptar el permiso del micrófono |
 | TTS base | `speechSynthesis` del navegador cuando el TTS local no está listo | Permitir audio en la pestaña; no necesita una API adicional |
-| STT/TTS avanzado | WhisperLiveKit + Piper/Kokoro y modelos locales | Instalar los entornos y modelos indicados en `CREDENTIALS.md` |
+| TTS local | Kokoro en `tts/venv` o una instalación de Piper | Instalar dependencias y modelos siguiendo [`GUIA_VOZ.md`](GUIA_VOZ.md) |
+| STT local | WhisperLiveKit y `large-v3-turbo` | Clonar el proyecto, crear `WhisperLiveKit/venv` y descargar el modelo según [`GUIA_VOZ.md`](GUIA_VOZ.md) |
 
 El texto reconocido por el navegador entra en `/api/asr/process`, el mismo contrato que usa la pantalla táctil. Si el backend detecta un reproductor TTS local listo, lo usa primero; si no, la respuesta saneada se reproduce en el navegador. Esto hace funcional el recorrido de voz de demostración sin presentar un modelo grande como si estuviera incluido.
 
-El navegador debe ser compatible y tener permiso de micrófono. Si se necesita una ruta independiente del navegador, hay que instalar WhisperLiveKit y su modelo; no es una credencial que pueda sustituirse por una variable de `.env`.
+El navegador debe ser compatible y tener permiso de micrófono. Si se necesita una ruta independiente del navegador, hay que instalar WhisperLiveKit y su modelo; no es una credencial que pueda sustituirse por una variable de `.env`. OpenRouter tampoco sustituye STT/TTS: en este proyecto se reserva para LLM y visión.
+
+La instalación paso a paso de Kokoro, Piper, WhisperLiveKit y OpenRouter está en [`docs/GUIA_VOZ.md`](GUIA_VOZ.md), con enlaces a sus proyectos oficiales y ejemplos de `.env`.
 
 ## 7. Qué está incluido y qué requiere preparación adicional
 

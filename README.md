@@ -65,8 +65,12 @@ La interfaz y el backend pueden abrirse sin una clave de LLM. Para respuestas ge
 
 - **STT básico sin descargar modelos:** en Chrome o Edge, `/robot` usa el reconocimiento de voz del navegador después de conceder permiso al micrófono. El texto se envía al mismo endpoint de pedido que usa la pantalla.
 - **TTS básico sin descargar modelos:** si el TTS local no está disponible, el navegador reproduce la respuesta en español mediante `speechSynthesis`. Por eso el recorrido de voz puede probarse en una laptop limpia.
-- **Voz avanzada opcional:** WhisperLiveKit, Piper/Kokoro y sus modelos mejoran privacidad, latencia y calidad, pero requieren instalaciones y descargas adicionales. El clon no finge incluir varios gigabytes de modelos.
+- **Voz local opcional:** Kokoro, Piper y WhisperLiveKit requieren instalar entornos y descargar pesos. La secuencia exacta, los enlaces oficiales y las rutas de `.env` están en [`docs/GUIA_VOZ.md`](docs/GUIA_VOZ.md).
 - **LLM opcional:** añade `OPENROUTER_API_KEY` para respuestas generativas cloud. Sin ella, todavía puedes abrir las páginas y probar el flujo de pedido con los servicios locales disponibles.
+
+OpenRouter solo cubre LLM y visión; no reemplaza STT ni TTS. Para una API de voz
+cloud habría que integrar un proveedor específico en el backend. No se requiere
+ninguna API para la ruta básica del navegador.
 
 ## Scripts principales
 
@@ -123,6 +127,6 @@ Las imágenes anteriores (`robot.png`, `cocina.png` y `admin.png`) se conservan 
 
 ## Para tesis y contribuciones
 
-Consulta [`docs/GUIA_PUBLICA.md`](docs/GUIA_PUBLICA.md) para arquitectura, pruebas, variables, modos de ejecución, publicación cloud y límites de la demostración. Las reglas para colaborar están en [`CONTRIBUTING.md`](CONTRIBUTING.md) y la licencia en [`LICENSE`](LICENSE).
+Consulta [`docs/GUIA_PUBLICA.md`](docs/GUIA_PUBLICA.md) para arquitectura, pruebas, variables, modos de ejecución, publicación cloud y límites de la demostración. Para instalar voz local usa [`docs/GUIA_VOZ.md`](docs/GUIA_VOZ.md). Las reglas para colaborar están en [`CONTRIBUTING.md`](CONTRIBUTING.md) y la licencia en [`LICENSE`](LICENSE).
 
 Esta guía y este README son la documentación pública de referencia. Las notas que viven dentro de cada módulo son documentación técnica o histórica y no sustituyen el quickstart.

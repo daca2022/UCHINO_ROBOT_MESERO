@@ -2,7 +2,10 @@
 
 ## Propósito
 
-Sintetiza texto a voz para las respuestas de Uchino. Usa Kokoro ONNX como motor primario (bajo consumo de VRAM, ~0.3 GB) y Piper ONNX como fallback local. Incluye soporte para RVC (Retrieval-based Voice Conversion) para personalizacion de voz y un servidor HTTP para solicitudes de sintesis.
+Sintetiza texto a voz para las respuestas de Uchino. Usa Kokoro como motor
+local primario y conserva Piper como alternativa. Los paquetes Python, los
+pesos ONNX y los entornos de reproducción no se incluyen en el clon público;
+la instalación está en [`docs/GUIA_VOZ.md`](../../../docs/GUIA_VOZ.md).
 
 ## Tecnologías
 
@@ -15,7 +18,7 @@ Sintetiza texto a voz para las respuestas de Uchino. Usa Kokoro ONNX como motor 
 
 - `tts_manager.py` — Gestor principal que selecciona motor y genera audio
 - `kokoro_tts.py` — Implementacion de TTS con Kokoro ONNX
-- `auron_voice.py` — Configuracion de voz personalizada (Auron)
+- `auron_voice.py` — Configuración de voz personalizada (Auron)
 
 ## Interacciones
 
